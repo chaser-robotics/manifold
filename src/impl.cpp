@@ -247,6 +247,7 @@ void Manifold::Impl::SetNormalsAndCoplanar() {
     if (halfedge_.Start(3 * tp.tri) < 0) continue;
     const vec3 base = vertPos_[halfedge_.Start(3 * tp.tri)];
     const vec3 normal = faceNormal_[tp.tri];
+    const mat2x3 projection = GetAxisAlignedProjection(normal);
     interiorHalfedges.resize(3);
     interiorHalfedges[0] = 3 * tp.tri;
     interiorHalfedges[1] = 3 * tp.tri + 1;
@@ -256,9 +257,20 @@ void Manifold::Impl::SetNormalsAndCoplanar() {
       interiorHalfedges.pop_back();
       if (meshRelation_.triRef[h / 3].coplanarID >= 0) continue;
 
+      // A triangle joins the face when it lies within tolerance of the face's
+      // plane and, read in the face's projection, is not inverted. A triangle
+      // facing the other way, such as the other side of a slot thinner than
+      // the tolerance, stays a face of its own with its own normal; a degenerate
+      // one (within tolerance of a line) joins and is left to the edge
+      // operations. Every candidate is read against the seed, so no chain of
+      // degenerate triangles carries the face onto an opposite-facing one.
+      const size_t tri = h / 3;
       const vec3 v = vertPos_[halfedge_.End(h)];
-      if (std::abs(dot(v - base, normal)) < tolerance_) {
-        const size_t tri = h / 3;
+      if (std::abs(dot(v - base, normal)) < tolerance_ &&
+          CCW(projection * vertPos_[halfedge_.Start(3 * tri)],
+              projection * vertPos_[halfedge_.Start(3 * tri + 1)],
+              projection * vertPos_[halfedge_.Start(3 * tri + 2)],
+              tolerance_) >= 0) {
         meshRelation_.triRef[tri].coplanarID = tp.tri;
         faceNormal_[tri] = normal;
 

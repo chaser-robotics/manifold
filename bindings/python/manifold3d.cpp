@@ -526,6 +526,7 @@ NB_MODULE(manifold3d, m) {
              float tolerance) {
             new (self) MeshGL();
             MeshGL& out = *self;
+            out.tolerance = tolerance;
             out.numProp = vertProp.shape(1);
             out.vertProperties = toVector(vertProp.data(), vertProp.size());
 
@@ -638,9 +639,10 @@ NB_MODULE(manifold3d, m) {
                  nb::ndarray<uint64_t, nb::shape<-1>, nb::c_contig>>& faceID,
              const std::optional<nb::ndarray<double, nb::shape<-1, 3, 4>,
                                              nb::c_contig>>& halfedgeTangent,
-             float tolerance) {
+             double tolerance) {
             new (self) MeshGL64();
             MeshGL64& out = *self;
+            out.tolerance = tolerance;
             out.numProp = vertProp.shape(1);
             out.vertProperties = toVector(vertProp.data(), vertProp.size());
 
